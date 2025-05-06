@@ -1,84 +1,41 @@
-using Ambev.DeveloperEvaluation.Application;
-using Ambev.DeveloperEvaluation.Common.HealthChecks;
-using Ambev.DeveloperEvaluation.Common.Logging;
-using Ambev.DeveloperEvaluation.Common.Security;
-using Ambev.DeveloperEvaluation.Common.Validation;
-using Ambev.DeveloperEvaluation.IoC;
-using Ambev.DeveloperEvaluation.ORM;
-using Ambev.DeveloperEvaluation.WebApi.Middleware;
-using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Serilog;
+var builder = WebApplication.CreateBuilder(args);
 
-namespace Ambev.DeveloperEvaluation.WebApi;
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
 
-public class Program
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
 {
-    public static void Main(string[] args)
-    {
-        try
-        {
-            Log.Information("Starting web application");
+    app.MapOpenApi();
+}
 
-            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-            builder.AddDefaultLogging();
+app.UseHttpsRedirection();
 
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
+var summaries = new[]
+{
+    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+};
 
-            builder.AddBasicHealthChecks();
-            builder.Services.AddSwaggerGen();
+app.MapGet("/weatherforecast", () =>
+{
+    var forecast =  Enumerable.Range(1, 5).Select(index =>
+        new WeatherForecast
+        (
+            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+            Random.Shared.Next(-20, 55),
+            summaries[Random.Shared.Next(summaries.Length)]
+        ))
+        .ToArray();
+    return forecast;
+})
+.WithName("GetWeatherForecast");
 
-            builder.Services.AddDbContext<DefaultContext>(options =>
-                options.UseNpgsql(
-                    builder.Configuration.GetConnectionString("DefaultConnection"),
-                    b => b.MigrationsAssembly("Ambev.DeveloperEvaluation.ORM")
-                )
-            );
+app.Run();
 
-            builder.Services.AddJwtAuthentication(builder.Configuration);
-
-            builder.RegisterDependencies();
-
-            builder.Services.AddAutoMapper(typeof(Program).Assembly, typeof(ApplicationLayer).Assembly);
-
-            builder.Services.AddMediatR(cfg =>
-            {
-                cfg.RegisterServicesFromAssemblies(
-                    typeof(ApplicationLayer).Assembly,
-                    typeof(Program).Assembly
-                );
-            });
-
-            builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-
-            var app = builder.Build();
-            app.UseMiddleware<ValidationExceptionMiddleware>();
-
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseBasicHealthChecks();
-
-            app.MapControllers();
-
-            app.Run();
-        }
-        catch (Exception ex)
-        {
-            Log.Fatal(ex, "Application terminated unexpectedly");
-        }
-        finally
-        {
-            Log.CloseAndFlush();
-        }
-    }
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+{
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
