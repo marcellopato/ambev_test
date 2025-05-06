@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Ambev.DeveloperEvaluation.Application.Sales.Commands;
 using Ambev.DeveloperEvaluation.Application.Sales.Queries;
@@ -9,6 +11,7 @@ namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class SalesController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -19,6 +22,7 @@ namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(List<SaleResponse>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
             var query = new GetAllSalesQuery();
@@ -27,14 +31,25 @@ namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(SaleResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(Guid id)
         {
             var query = new GetSaleQuery { Id = id };
             var result = await _mediator.Send(query);
+            
+            if (result == null)
+                return NotFound(new { message = $"Venda {id} não encontrada" });
+
             return Ok(result);
         }
 
+        /// <summary>
+        /// Cria uma nova venda
+        /// </summary>
         [HttpPost]
+        [ProducesResponseType(typeof(CreateSaleResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateSaleCommand command)
         {
             var result = await _mediator.Send(command);

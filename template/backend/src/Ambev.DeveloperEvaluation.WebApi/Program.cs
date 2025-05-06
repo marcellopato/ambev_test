@@ -1,8 +1,34 @@
+using Ambev.DeveloperEvaluation.ORM.Context;
+using Ambev.DeveloperEvaluation.ORM.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<ISaleRepository, SaleRepository>();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "DeveloperStore Sales API",
+        Version = "v1",
+        Description = "API para gerenciamento de vendas do DeveloperStore"
+    });
+
+    c.AddServer(new OpenApiServer
+    {
+        Url = "http://localhost:5000",
+        Description = "Desenvolvimento Local"
+    });
+});
 
 var app = builder.Build();
 

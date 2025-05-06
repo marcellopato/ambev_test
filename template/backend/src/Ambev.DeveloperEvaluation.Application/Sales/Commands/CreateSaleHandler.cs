@@ -1,10 +1,18 @@
-using MediatR;
 using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.ORM.Repositories;
+using MediatR;
 
 namespace Ambev.DeveloperEvaluation.Application.Sales.Commands
 {
     public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleResponse>
     {
+        private readonly ISaleRepository _repository;
+
+        public CreateSaleHandler(ISaleRepository repository)
+        {
+            _repository = repository;
+        }
+
         public async Task<CreateSaleResponse> Handle(CreateSaleCommand request, CancellationToken cancellationToken)
         {
             var sale = new Sale(request.CustomerName, request.BranchName);
@@ -14,8 +22,8 @@ namespace Ambev.DeveloperEvaluation.Application.Sales.Commands
                 sale.AddItem(item.ProductName, item.Quantity, item.UnitPrice);
             }
 
-            // TODO: Adicionar persistência
-            
+            await _repository.AddAsync(sale);
+
             return new CreateSaleResponse 
             { 
                 Id = sale.Id,
