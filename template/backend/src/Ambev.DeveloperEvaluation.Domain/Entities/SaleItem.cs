@@ -12,7 +12,6 @@ namespace Ambev.DeveloperEvaluation.Domain.Entities
         public decimal UnitPrice { get; private set; }
         public decimal Discount { get; private set; }
         public decimal TotalAmount { get; private set; }
-        public bool IsCancelled { get; private set; }
 
         protected SaleItem() { }
 
@@ -32,12 +31,6 @@ namespace Ambev.DeveloperEvaluation.Domain.Entities
         {
             var subtotal = Quantity * UnitPrice;
             TotalAmount = subtotal - (subtotal * Discount);
-        }
-
-        public void Cancel()
-        {
-            IsCancelled = true;
-            // Aqui poderíamos publicar um evento ItemCancelled
         }
     }
 }

@@ -44,7 +44,13 @@ namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> Cancel(Guid id)
         {
-            return Ok(new { message = $"Venda {id} cancelada" });
+            var command = new CancelSaleCommand { Id = id };
+            var result = await _mediator.Send(command);
+            
+            if (result)
+                return Ok(new { message = $"Venda {id} cancelada com sucesso" });
+            
+            return NotFound(new { message = $"Venda {id} não encontrada" });
         }
     }
 }

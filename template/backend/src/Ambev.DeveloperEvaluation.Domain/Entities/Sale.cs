@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambev.DeveloperEvaluation.Domain.Entities
 {
@@ -47,17 +48,12 @@ namespace Ambev.DeveloperEvaluation.Domain.Entities
 
         private void UpdateTotalAmount()
         {
-            TotalAmount = 0;
-            foreach (var item in Items)
-            {
-                TotalAmount += item.TotalAmount;
-            }
+            TotalAmount = Items.Sum(x => x.TotalAmount);
         }
 
         public void Cancel()
         {
             IsCancelled = true;
-            // Aqui poderíamos publicar um evento SaleCancelled
         }
     }
 }
